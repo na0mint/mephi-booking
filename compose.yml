@@ -1,0 +1,61 @@
+x-backend: &backend
+  environment: &environment
+    EUREKA_URL: http://eureka-server:8761/eureka/
+    JWT_SECRET: ${JWT_SECRET:-development-only-secret-change-me-32-bytes-minimum}
+    DEMO_SEED: ${DEMO_SEED:-true}
+  depends_on:
+    eureka-server:
+      condition: service_healthy
+
+services:
+  eureka-server:
+    build:
+      context: .
+      args:
+        SERVICE: eureka-server
+    ports:
+      - "127.0.0.1:8761:8761"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8761/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+  hotel-service:
+    <<: *backend
+    build:
+      context: .
+      args:
+        SERVICE: hotel-service
+    ports:
+      - "127.0.0.1:8081:8081"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8081/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+  booking-service:
+    <<: *backend
+    build:
+      context: .
+      args:
+        SERVICE: booking-service
+    ports:
+      - "127.0.0.1:8082:8082"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8082/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+  api-gateway:
+    <<: *backend
+    build:
+      context: .
+      args:
+        SERVICE: api-gateway
+    ports:
+      - "127.0.0.1:8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8080/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
